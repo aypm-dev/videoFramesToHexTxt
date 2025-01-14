@@ -1,49 +1,68 @@
 from PIL import Image
+import os
+import time
 
-file = open(r""+ str(input("\nInsert txt ouput name: ")) + ".txt","w+")
-Nframe = 0
-FramesNumber = input("\nInsert the number of frames: ")
-Hexadecimal = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F","F"]
+outputFolder = "output"
+file = open(r"" + outputFolder + "/" + str(input("\nInsert txt ouput name: ")) + ".txt","w+")
+hexadecimalLookupTable = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F","F"]
 
-def ObtenerPixeles(Imagen):
-    
-    Y = 0; B = ""; i = 0
-    a = Image.open("Frames/" + str(Imagen) + ".jpg", 'r')
-    while i < 32:
-        B = B + X(Y, a)
-        Y += 1
-        i += 1
-        if i == 32:
-            file.write(str(B))
-            file.write("\n")
-            print("Frame " + Imagen + "... Binarizado")
+framesFolder = "videoFrames"
+frameExtension = ".jpg"
 
-def X(y, A):
+def processRow(rowY, imageData):
     x = 0
     line = ""
-    pixeles = A.load()
+    pixeles = imageData.load()
+
     while x < 32:
-
-
-        Red = Hexadecimal[(round((pixeles[x, y][0]) / 16))]
-        Green = Hexadecimal[(round((pixeles[x, y][1]) / 16))]
-        Blue = Hexadecimal[(round((pixeles[x, y][2]) / 16))]
-        line = line + str(Red) + str(Green) + str(Blue)
-
+        red = hexadecimalLookupTable[(round((pixeles[x, rowY][0]) / 16))]
+        green = hexadecimalLookupTable[(round((pixeles[x, rowY][1]) / 16))]
+        blue = hexadecimalLookupTable[(round((pixeles[x, rowY][2]) / 16))]
+        line += str(red) + str(green) + str(blue)
         x += 1
         if x == 32:
             return line
 
-while True:
-    ObtenerPixeles(str(Nframe))
+def processImageRows(imageData):
+    currentY = 0
+    colorData = ""
+    i = 0
 
-    if Nframe == int(FramesNumber):
-        
-        print("\n\n\n\n\n\n\n\n\n\nSuccess :D\n\n")
-        input()
-        break 
-    Nframe += 1
+    while i < 32:
+        colorData += processRow(currentY, imageData)
+        currentY += 1
+        i += 1
+
+    return colorData
+
+def getPixelsFromImage(imagePath):
+    imageData = Image.open(framesFolder + "/" + imagePath, 'r')
+    colorData = processImageRows(imageData)
+    file.write(colorData)
+    file.write("\n")
+    print("Frame " + imagePath + "... Converted to Hexadecimal RGB")
+
+def main():
+    videoFramesAmount = len([file for file in os.listdir(framesFolder) if file.endswith(frameExtension)])
+    print(f"Detected {videoFramesAmount} frames in the folder. \n\n Getting data...")
+
+    # Pause for 1 second to allow the user to see the detected frame count
+    time.sleep(3)
+
+    currentFrame = 0
+
+    while True:
+        getPixelsFromImage(str(currentFrame) + frameExtension)
+
+        if currentFrame == (videoFramesAmount - 1):
+            print("\n\n\n\n\n\n\n\n\n\nSuccess :D\nSaved to: " + file.name + "\n\n")
+            input()
+            break 
+
+        currentFrame += 1
     
+
+main()
     
 
     
